@@ -16,11 +16,13 @@ export default class Board extends React.Component {
       }
     }
     this.swimlanes = {
+      //a built-in method primarily used to declare references inside class components to directly access DOM nodes or React element instances
       backlog: React.createRef(),
       inProgress: React.createRef(),
       complete: React.createRef(),
     }
   }
+
   getClients() {
     return [
       ['1','Stark, White and Abbott','Cloned Optimal Architecture', 'in-progress'],
@@ -50,12 +52,40 @@ export default class Board extends React.Component {
       status: companyDetails[3],
     }));
   }
+   
   renderSwimlane(name, clients, ref) {
     return (
       <Swimlane name={name} clients={clients} dragulaRef={ref}/>
     );
   }
 
+  //a React class component lifecycle method that executes exactly once, immediately after a component is first rendered and inserted into the browser's Document Object Model (DOM)
+  componentDidMount() { 
+    const drake = Dragula([
+      this.swimlanes.backlog.current,
+      this.swimlanes.inProgress.current,
+      this.swimlanes.complete.current
+    ]);
+    const dragulaContainers = drake.containers;
+    drake.on('drop', (el, target, source, sibling) => {
+      const card_id = el.getAttribute('data-id');
+      const statuses = ["backlog", "in-progress", "complete"]
+      const new_card_status = statuses[dragulaContainers.indexOf(target)];
+      const clients = this.state.clients;
+      let client;
+      //find the corresponding card in the client object  
+      for (let status in clients) {
+        client = clients[status].find(client => client.id === card_id);
+        if (client) {
+          break;
+        }
+      }
+      client.status = new_card_status;
+      this.setState({
+        clients,
+      });
+    });
+  }
   render() {
     return (
       <div className="Board">
